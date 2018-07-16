@@ -19,6 +19,7 @@ import com.microsoft.azure.sdk.iot.device.transport.https.HttpsResponse;
 import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixSocketChannel;
 import mockit.*;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.*;
@@ -29,6 +30,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 
+@Ignore
 public class HttpsHsmClientTest
 {
     @Mocked

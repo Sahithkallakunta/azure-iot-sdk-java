@@ -387,28 +387,4 @@ public class HttpsConnection
         //Codes_SRS_HTTPSCONNECTION_34_029: [The function shall return the request method.]
         return this.connection.getRequestMethod();
     }
-
-    String getRequestHeaders()
-    {
-        String headerString = "";
-        Map<String, List<String>> headerFields = this.connection.getRequestProperties();
-
-        for (String key : headerFields.keySet())
-        {
-            headerString += (key);
-            headerString += ": ";
-
-            for (String value : headerFields.get(key))
-            {
-                headerString += value;
-                headerString += "; ";
-            }
-            headerString = headerString.substring(0, headerString.length() - 2);
-
-            headerString += "\r\n";
-        }
-
-        //Codes_SRS_HTTPSCONNECTION_34_030: [The function shall return all the request headers in the format "<key>: <value1>; <value2>\r\n <key>: <value1>\r\n...".]
-        return headerString;
-    }
 }

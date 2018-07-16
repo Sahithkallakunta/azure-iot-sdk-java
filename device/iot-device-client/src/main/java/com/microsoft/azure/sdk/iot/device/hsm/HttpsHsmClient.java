@@ -5,7 +5,6 @@
 
 package com.microsoft.azure.sdk.iot.device.hsm;
 
-import com.microsoft.azure.sdk.iot.deps.transport.http.HttpRequest;
 import com.microsoft.azure.sdk.iot.device.exceptions.TransportException;
 import com.microsoft.azure.sdk.iot.device.hsm.parser.ErrorResponse;
 import com.microsoft.azure.sdk.iot.device.hsm.parser.SignRequest;
@@ -27,8 +26,8 @@ public class HttpsHsmClient
     private String baseUrl;
     private String scheme;
 
-    private static final String HttpsScheme = "https";
-    private static final String UnixScheme = "unix";
+    private static final String HTTPS_SCHEME = "https";
+    private static final String UNIX_SCHEME = "unix";
 
     /**
      * Client object for sending sign requests to an HSM unit
@@ -41,6 +40,33 @@ public class HttpsHsmClient
         this.baseUrl = baseUrl;
         URI uri = new URI(baseUrl);
         this.scheme = uri.getScheme();
+
+        //URL class does not have a url stream handler for unix scheme by default. We only need this class for parsing
+        // a url rather than opening any connections, so this psuedo-stub class is used.
+        if (this.scheme.equalsIgnoreCase(UNIX_SCHEME))
+        {
+            URL.setURLStreamHandlerFactory(new URLStreamHandlerFactory()
+            {
+                @Override
+                public URLStreamHandler createURLStreamHandler(String protocol)
+                {
+                    if (protocol.equalsIgnoreCase(UNIX_SCHEME))
+                    {
+                        return new URLStreamHandler()
+                        {
+                            @Override
+                            protected URLConnection openConnection(URL u)
+                            {
+                                //unix connection should never be opened using this method
+                                throw new UnsupportedOperationException("Cannot use URL class to open a unix connection");
+                            }
+                        };
+                    }
+
+                    return null;
+                }
+            });
+        }
     }
 
     /**
@@ -75,11 +101,11 @@ public class HttpsHsmClient
         httpsRequest.setHeaderField("Accept", "application/json");
 
         HttpsResponse response = null;
-        if (this.scheme.equalsIgnoreCase(HttpsScheme))
+        if (this.scheme.equalsIgnoreCase(HTTPS_SCHEME))
         {
             response = httpsRequest.send();
         }
-        else if (this.scheme.equalsIgnoreCase(UnixScheme))
+        else if (this.scheme.equalsIgnoreCase(UNIX_SCHEME))
         {
             // Codes_SRS_HSMHTTPCLIENT_34_006: [If the scheme of the provided url is Unix, this function shall send the http request using unix domain sockets.]
             response = sendHttpRequestUsingUnixSocket(httpsRequest, urlBuilder.toString());
