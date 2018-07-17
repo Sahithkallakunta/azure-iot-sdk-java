@@ -18,10 +18,12 @@ public class SignRequest
     @SerializedName(KEY_ID_NAME)
     private String keyId;
 
+    private transient Mac algo;
+
     private static final String ALGO_NAME = "algo";
     @Expose(serialize = true, deserialize = false)
     @SerializedName(ALGO_NAME)
-    private Mac algo;
+    private String algoString;
 
     private static final String DATA_NAME = "data";
     @Expose(serialize = true, deserialize = false)
@@ -50,6 +52,8 @@ public class SignRequest
     {
         // Codes_SRS_HTTPHSMSIGNREQUEST_34_004: [This function shall save the provided algo.]
         this.algo = algo;
+
+        this.algoString = algo.getAlgorithm();
     }
 
     public String toJson()

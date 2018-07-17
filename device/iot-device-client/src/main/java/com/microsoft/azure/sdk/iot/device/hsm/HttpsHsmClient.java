@@ -108,7 +108,7 @@ public class HttpsHsmClient
         else if (this.scheme.equalsIgnoreCase(UNIX_SCHEME))
         {
             // Codes_SRS_HSMHTTPCLIENT_34_006: [If the scheme of the provided url is Unix, this function shall send the http request using unix domain sockets.]
-            response = sendHttpRequestUsingUnixSocket(httpsRequest, urlBuilder.toString());
+            response = sendHttpRequestUsingUnixSocket(httpsRequest, urlBuilder.toString(), "modules/" + moduleName + "/sign", "apiVersion=" + api_version);
         }
         else
         {
@@ -136,7 +136,7 @@ public class HttpsHsmClient
      * @throws MalformedURLException if a proper URL cannot be constructed due to the provided api version
      * @throws HsmException if the hsm rejects the request for any reason
      */
-    public TrustBundleResponse getTrustBundle(String apiVersion) throws UnsupportedEncodingException, TransportException, MalformedURLException, HsmException
+    public TrustBundleResponse getTrustBundle(String apiVersion) throws IOException, TransportException, HsmException, URISyntaxException
     {
         if (apiVersion == null || apiVersion.isEmpty())
         {
@@ -152,8 +152,20 @@ public class HttpsHsmClient
         urlBuilder.append("api-version=").append(URLEncoder.encode(apiVersion, "UTF-8"));
 
         // Codes_SRS_HSMHTTPCLIENT_34_009: [This function shall send a GET http request to the built url.]
-        HttpsRequest request = new HttpsRequest(new URL(urlBuilder.toString()), HttpsMethod.GET, null, TransportUtils.USER_AGENT_STRING);
-        HttpsResponse response = request.send();
+        HttpsRequest httpsRequest = new HttpsRequest(new URL(urlBuilder.toString()), HttpsMethod.GET, null, TransportUtils.USER_AGENT_STRING);
+        HttpsResponse response;
+        if (this.scheme.equalsIgnoreCase(HTTPS_SCHEME))
+        {
+            response = httpsRequest.send();
+        }
+        else if (this.scheme.equalsIgnoreCase(UNIX_SCHEME))
+        {
+            response = sendHttpRequestUsingUnixSocket(httpsRequest, urlBuilder.toString(), "/trust-bundle", "apiVersion=" + apiVersion);
+        }
+        else
+        {
+            throw new UnsupportedOperationException("unrecognized URI scheme. Only HTTPS and UNIX are supported");
+        }
 
         int statusCode = response.getStatus();
         if (statusCode == 200)
@@ -177,10 +189,10 @@ public class HttpsHsmClient
      * @throws IOException If the unix socket cannot be reached
      * @throws URISyntaxException the the url cannot be parsed
      */
-    private static HttpsResponse sendHttpRequestUsingUnixSocket(HttpsRequest httpsRequest, String url) throws IOException, URISyntaxException
+    private static HttpsResponse sendHttpRequestUsingUnixSocket(HttpsRequest httpsRequest, String url, String path, String queryString) throws IOException, URISyntaxException
     {
         //write to socket
-        byte[] requestBytes = HttpsRequestResponseSerializer.serializeRequest(httpsRequest);
+        byte[] requestBytes = HttpsRequestResponseSerializer.serializeRequest(httpsRequest, path, queryString);
         UnixSocketAddress address = new UnixSocketAddress(url);
         UnixSocketChannel channel = UnixSocketChannel.open(address);
         PrintWriter writer = new PrintWriter(Channels.newOutputStream(channel));

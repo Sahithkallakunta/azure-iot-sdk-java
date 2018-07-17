@@ -845,49 +845,6 @@ public class HttpsConnectionTest
         assertEquals(httpsMethod.name(), actual);
     }
 
-    //Tests_SRS_HTTPSCONNECTION_34_030: [The function shall return all the request headers in the format "<key>: <value1>; <value2>\n <key>: <value1>\n...".]
-    @Test
-    public void getHeadersReturnsHeaders() throws IOException, TransportException
-    {
-        //arrange
-        final HttpsMethod httpsMethod = HttpsMethod.POST;
-        final Map<String, List<String>> expectedHeaders = new HashMap<>();
-        List<String> values1 = new LinkedList<>();
-        values1.add("someValue1");
-        values1.add("someValue2");
-        expectedHeaders.put("key1", values1);
-
-        List<String> values2 = new LinkedList<>();
-        values2.add("someValue1");
-        expectedHeaders.put("key2", values2);
-
-        new NonStrictExpectations()
-        {
-            {
-                mockUrl.getProtocol();
-                result = "https";
-                mockUrl.openConnection();
-                result = mockUrlConn;
-                mockUrlConn.getRequestMethod();
-                result = httpsMethod.name();
-                mockUrlConn.getURL();
-                result = mockUrl;
-
-                mockUrlConn.getRequestProperties();
-                result = expectedHeaders;
-            }
-        };
-        HttpsConnection conn = new HttpsConnection(mockUrl, httpsMethod);
-
-        String expectedString = "key1: someValue1; someValue2\r\n" + "key2: someValue1\r\n";
-
-        //act
-        String actual = Deencapsulation.invoke(conn, "getRequestHeaders");
-
-        //assert
-        assertEquals(expectedString, actual);
-    }
-
     //Tests_SRS_HTTPSCONNECTION_34_031: [The function shall return the saved body.]
     @Test
     public void getBodyReturnsSavedBody() throws IOException, TransportException
