@@ -75,8 +75,8 @@ public class AmqpsDeviceOperations
 
         // Codes_SRS_AMQPSDEVICEOPERATIONS_12_002: [The constructor shall initialize sender and receiver tags with UUID string.]
         String uuidStr = UUID.randomUUID().toString();
-        this.senderLinkTag = uuidStr;
-        this.receiverLinkTag = uuidStr;
+        this.senderLinkTag = UUID.randomUUID().toString();
+        this.receiverLinkTag = UUID.randomUUID().toString();
 
         // Codes_SRS_AMQPSDEVICEOPERATIONS_12_003: [The constructor shall initialize sender and receiver endpoint path members to empty string.]
         this.senderLinkEndpointPath = "";
@@ -119,7 +119,11 @@ public class AmqpsDeviceOperations
             this.senderLinkAddress = String.format(this.senderLinkEndpointPath, deviceId);
             this.receiverLinkAddress = String.format(receiverLinkEndpointPath, deviceId);
         }
+
+        this.config = deviceClientConfig;
     }
+
+    private DeviceClientConfig config;
 
     /**
      * Opens receiver and sender link
@@ -172,6 +176,11 @@ public class AmqpsDeviceOperations
             {
                 // Codes_SRS_AMQPSDEVICEOPERATIONS_12_007: [The function shall create receiver link with the receiverlinkTag member value.]
                 this.receiverLink = session.receiver(this.getReceiverLinkTag());
+
+                if (this.receiverLink.getName().contains("telem"))
+                {
+                    this.amqpProperties.put(Symbol.getSymbol("com.microsoft:channel-correlation-id"), Symbol.getSymbol(this.config.getDeviceId()));
+                }
 
                 // Codes_SRS_AMQPSDEVICEOPERATIONS_12_009: [The function shall set both receiver and sender link properties to the amqpProperties member value.]
                 this.receiverLink.setProperties(this.getAmqpProperties());
@@ -252,8 +261,17 @@ public class AmqpsDeviceOperations
                     // Codes_SRS_AMQPSIOTHUBCONNECTION_15_044: [If the link is the Sender link, the event handler shall set its target to the created Target (Proton) object.]
                     link.setTarget(target);
 
-                    // Codes_SRS_AMQPSIOTHUBCONNECTION_14_045: [If the link is the Sender link, the event handler shall set the SenderSettleMode to UNSETTLED.]
-                    link.setSenderSettleMode(SenderSettleMode.UNSETTLED);
+                    if (link.getName().contains("telem"))
+                    {
+                        link.setSenderSettleMode(null);
+                        link.setReceiverSettleMode(null);
+                    }
+                    else
+                    {
+                        // Codes_SRS_AMQPSIOTHUBCONNECTION_14_045: [If the link is the Sender link, the event handler shall set the SenderSettleMode to UNSETTLED.]
+                        link.setSenderSettleMode(SenderSettleMode.SETTLED);
+                        link.setReceiverSettleMode(ReceiverSettleMode.FIRST);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -275,7 +293,14 @@ public class AmqpsDeviceOperations
                     // Codes_SRS_AMQPSIOTHUBCONNECTION_14_047: [If the link is the Receiver link, the event handler shall set its source to the created Source (Proton) object.]
                     link.setSource(source);
 
-                    link.setReceiverSettleMode(ReceiverSettleMode.FIRST);
+                    if (link.getName().contains("telem") && config.getModuleId() == null)
+                    {
+                        link.setReceiverSettleMode(ReceiverSettleMode.SECOND);
+                    }
+                    else
+                    {
+                        link.setReceiverSettleMode(ReceiverSettleMode.FIRST);
+                    }
                 }
                 catch (Exception e)
                 {

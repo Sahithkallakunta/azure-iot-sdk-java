@@ -17,6 +17,7 @@ import org.apache.qpid.proton.message.impl.MessageImpl;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public final class AmqpsDeviceTelemetry extends AmqpsDeviceOperations
 {
@@ -26,7 +27,7 @@ public final class AmqpsDeviceTelemetry extends AmqpsDeviceOperations
     private static final String RECEIVER_LINK_ENDPOINT_PATH = "/devices/%s/messages/devicebound";
 
     private static final String SENDER_LINK_ENDPOINT_PATH_MODULES = "/devices/%s/modules/%s/messages/events";
-    private static final String RECEIVER_LINK_ENDPOINT_PATH_MODULES = "/devices/%s/modules/%s/messages/devicebound";
+    private static final String RECEIVER_LINK_ENDPOINT_PATH_MODULES = "/devices/%s/modules/%s/messages/events";
 
     private static final String SENDER_LINK_TAG_PREFIX = "sender_link_telemetry-";
     private static final String RECEIVER_LINK_TAG_PREFIX = "receiver_link_telemetry-";
@@ -47,41 +48,6 @@ public final class AmqpsDeviceTelemetry extends AmqpsDeviceOperations
                 SENDER_LINK_TAG_PREFIX, RECEIVER_LINK_TAG_PREFIX);
 
         this.deviceClientConfig = deviceClientConfig;
-
-        String moduleId = this.deviceClientConfig.getModuleId();
-        if (moduleId != null && !moduleId.isEmpty())
-        {
-            // Codes_SRS_AMQPSDEVICETELEMETRY_34_034: [If a moduleId is present, the constructor shall set the sender and receiver endpoint path to IoTHub specific values for module communication.]
-            this.senderLinkEndpointPath = SENDER_LINK_ENDPOINT_PATH_MODULES;
-            this.receiverLinkEndpointPath = RECEIVER_LINK_ENDPOINT_PATH_MODULES;
-
-            // Codes_SRS_AMQPSDEVICETELEMETRY_34_035: [If a moduleId is present, the constructor shall concatenate a sender specific prefix including the moduleId to the sender link tag's current value.]
-            this.senderLinkTag = SENDER_LINK_TAG_PREFIX + this.deviceClientConfig.getDeviceId() + "/" + moduleId + "-" + senderLinkTag;
-            this.receiverLinkTag = RECEIVER_LINK_TAG_PREFIX + this.deviceClientConfig.getDeviceId() + "/" + moduleId + "-" + receiverLinkTag;
-
-            // Codes_SRS_AMQPSDEVICETELEMETRY_34_036: [If a moduleId is present, the constructor shall insert the given deviceId and moduleId argument to the sender and receiver link address.]
-            this.senderLinkAddress = String.format(senderLinkEndpointPath, this.deviceClientConfig.getDeviceId(), moduleId);
-            this.receiverLinkAddress = String.format(receiverLinkEndpointPath, this.deviceClientConfig.getDeviceId(), moduleId);
-
-            this.amqpProperties.put(Symbol.getSymbol(CORRELATION_ID_KEY), Symbol.getSymbol(this.deviceClientConfig.getDeviceId() + "/" + moduleId));
-        }
-        else
-        {
-            // Codes_SRS_AMQPSDEVICETELEMETRY_12_002: [The constructor shall set the sender and receiver endpoint path to IoTHub specific values.]
-            this.senderLinkEndpointPath = SENDER_LINK_ENDPOINT_PATH;
-            this.receiverLinkEndpointPath = RECEIVER_LINK_ENDPOINT_PATH;
-
-            // Codes_SRS_AMQPSDEVICETELEMETRY_12_003: [The constructor shall concatenate a sender specific prefix to the sender link tag's current value.]
-            this.senderLinkTag = SENDER_LINK_TAG_PREFIX + this.deviceClientConfig.getDeviceId() + "-" + senderLinkTag;
-            // Codes_SRS_AMQPSDEVICETELEMETRY_12_004: [The constructor shall concatenate a receiver specific prefix to the receiver link tag's current value.]
-            this.receiverLinkTag = RECEIVER_LINK_TAG_PREFIX + this.deviceClientConfig.getDeviceId() + "-" + receiverLinkTag;
-
-            // Codes_SRS_AMQPSDEVICETELEMETRY_12_005: [The constructor shall insert the given deviceId argument to the sender and receiver link address.]
-            this.senderLinkAddress = String.format(senderLinkEndpointPath, this.deviceClientConfig.getDeviceId());
-            this.receiverLinkAddress = String.format(receiverLinkEndpointPath, this.deviceClientConfig.getDeviceId());
-
-            this.amqpProperties.put(Symbol.getSymbol(CORRELATION_ID_KEY), Symbol.getSymbol(this.deviceClientConfig.getDeviceId()));
-        }
     }
 
     /**

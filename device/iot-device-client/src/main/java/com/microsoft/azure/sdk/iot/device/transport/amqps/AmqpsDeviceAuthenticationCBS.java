@@ -81,6 +81,11 @@ public final class AmqpsDeviceAuthenticationCBS extends AmqpsDeviceAuthenticatio
 
         this.amqpProperties.put(Symbol.getSymbol(MessageProperty.CONNECTION_DEVICE_ID), deviceClientConfig.getDeviceId());
 
+        if (deviceClientConfig.getModuleId() != null)
+        {
+            this.amqpProperties.put(Symbol.getSymbol(MessageProperty.CONNECTION_MODULE_ID), deviceClientConfig.getModuleId());
+        }
+
         this.logger = new CustomLogger(this.getClass());
     }
 
@@ -188,7 +193,7 @@ public final class AmqpsDeviceAuthenticationCBS extends AmqpsDeviceAuthenticatio
 
     /**
      * Create domain from the SSLContext, set the sasl mechanism to 
-     * ANONYMUS and set domain on the transport 
+     * ANONYMOUS and set domain on the transport
      * 
      * @param transport Proton-J Transport object
      * @throws TransportException if Proton throws IOException
