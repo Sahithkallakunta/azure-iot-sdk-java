@@ -80,15 +80,13 @@ public class IotHubSasTokenHsmAuthenticationProvider extends IotHubSasTokenWithR
             String data = audience + "\n" + expiresOn;
             String signature = signatureProvider.sign(moduleId, data, generationId);
 
-            if (gatewayHostName != null && !gatewayHostName.isEmpty())
-            {
-                return new IotHubSasToken(gatewayHostName, deviceId, null, IotHubSasToken.buildSharedAccessToken(audience, Base64.encodeBase64StringLocal(signature.getBytes()), expiresOn), moduleId, expiresOn);
-            }
-            else
-            {
-                // Codes_SRS_MODULEAUTHENTICATIONWITHHSM_34_004: [If the gatewayHostname is null or empty, this function shall construct the sas token using the hostname instead of the gateway hostname.]
-                return new IotHubSasToken(hostname, deviceId, null, signature, moduleId, expiresOn);
-            }
+            String host = gatewayHostName != null && !gatewayHostName.isEmpty() ? gatewayHostName : hostname;
+            String sharedAccessToken = IotHubSasToken.buildSharedAccessToken(audience, signature, expiresOn);
+
+            System.out.println("Built sharedAccessToken: " + sharedAccessToken);
+
+            // Codes_SRS_MODULEAUTHENTICATIONWITHHSM_34_004: [If the gatewayHostname is null or empty, this function shall construct the sas token using the hostname instead of the gateway hostname.]
+            return new IotHubSasToken(host, deviceId, null, sharedAccessToken, moduleId, expiresOn);
         }
         catch (UnsupportedEncodingException | URISyntaxException | HsmException e)
         {

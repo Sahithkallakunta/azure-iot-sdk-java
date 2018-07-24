@@ -27,6 +27,12 @@ public class TrustBundleResponse
     {
         //Codes_SRS_TRUSTBUNDLERESPONSE_34_003: [This constructor shall create a new TrustBundleResponse from json.]
         TrustBundleResponse response = new GsonBuilder().create().fromJson(json, TrustBundleResponse.class);
+
+        if (response == null || response.certificates == null || response.certificates.isEmpty())
+        {
+            throw new IllegalArgumentException("The provided json did not contain any certificates");
+        }
+
         this.certificates = response.certificates;
     }
 

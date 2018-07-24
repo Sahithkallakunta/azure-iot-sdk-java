@@ -147,20 +147,30 @@ public class HttpsHsmClient
         urlBuilder.append("api-version=").append(URLEncoder.encode(apiVersion, "UTF-8"));
 
         // Codes_SRS_HSMHTTPCLIENT_34_009: [This function shall send a GET http request to the built url.]
-        HttpsRequest httpsRequest = new HttpsRequest(new URL(urlBuilder.toString()), HttpsMethod.GET, null, TransportUtils.USER_AGENT_STRING);
+        HttpsRequest httpsRequest = new HttpsRequest(new URL(urlBuilder.toString()), HttpsMethod.GET, new byte[0], TransportUtils.USER_AGENT_STRING);
         HttpsResponse response = sendRequestBasedOnScheme(httpsRequest, urlBuilder.toString(), "/trust-bundle", apiVersion);
 
         int statusCode = response.getStatus();
+        String body = response.getBody() != null ? new String(response.getBody()) : "";
         if (statusCode == 200)
         {
+            System.out.println("Received 200 from hsm on trust bundle request");
             // Codes_SRS_HSMHTTPCLIENT_34_010: [If the response from the http request is 200, this function shall return the trust bundle response.]
-            return new TrustBundleResponse(new String(response.getBody()));
+            return new TrustBundleResponse(body);
         }
         else
         {
+            System.out.println("Received " + statusCode + " from hsm on trust bundle request");
             // Codes_SRS_HSMHTTPCLIENT_34_011: [If the response from the http request is not 200, this function shall throw an HSMException.]
-            ErrorResponse errorResponse = ErrorResponse.fromJson(new String(response.getBody()));
-            throw new HsmException("Received error from hsm with status code " + statusCode + " and message " + errorResponse.getMessage());
+            ErrorResponse errorResponse = ErrorResponse.fromJson(body);
+            if (errorResponse != null)
+            {
+                throw new HsmException("Received error from hsm with status code " + statusCode + " and message " + errorResponse.getMessage());
+            }
+            else
+            {
+                throw new HsmException("Received error from hsm with status code " + statusCode);
+            }
         }
     }
 

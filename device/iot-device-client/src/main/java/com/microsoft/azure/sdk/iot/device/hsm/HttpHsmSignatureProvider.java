@@ -14,6 +14,7 @@ import com.microsoft.azure.sdk.iot.device.hsm.parser.SignResponse;
 import javax.crypto.Mac;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -83,6 +84,6 @@ public class HttpHsmSignatureProvider implements SignatureProvider
 
         SignResponse response = this.httpClient.sign(this.apiVersion, keyName, signRequest, generationId);
 
-        return response.getDigest();
+        return URLEncoder.encode(response.getDigest(), ENCODING_CHARSET);
     }
 }
