@@ -1,0 +1,45 @@
+queue:
+  name: Hosted VS2017
+  condition: succeeded()
+  demands: java
+steps:
+- task: Docker@0
+  displayName: Run
+  inputs:
+    action: 'Run an image'
+    imageName: 'aziotbld/dps'
+    ports: |
+     2322:2322
+     2321:2321
+    workDir: '/Users/tpm_simulator'
+    containerCommand: Simulator.exe
+    restartPolicy: always
+  enabled: false
+
+- script: 'jenkins\windows_java.cmd'
+  displayName: Command Line Script
+  env:
+    IOT_DPS_CONNECTION_STRING: $(IOT_DPS_CONNECTION_STRING)
+    IOTHUB_EVENTHUB_CONNECTION_STRING: $(IOTHUB_EVENTHUB_CONNECTION_STRING)
+    IOT_DPS_ID_SCOPE: $(IOT_DPS_ID_SCOPE)
+    IOTHUB_CONNECTION_STRING: $(IOTHUB_CONNECTION_STRING)
+    IOT_DPS_TPM_SIMULATOR_IP_ADDRESS: $(IOT_DPS_TPM_SIMULATOR_IP_ADDRESS)
+    IOT_DPS_GLOBAL_ENDPOINT: $(IOT_DPS_GLOBAL_ENDPOINT)
+    STORAGE_ACCOUNT_CONNECTION_STRING: $(STORAGE_ACCOUNT_CONNECTION_STRING)
+
+queue:
+  name: Hosted Linux Preview
+  condition: succeeded()
+  demands: java
+
+steps:
+- script: 'jenkins/linux_java.sh' 
+  displayName: Command Line Script
+  env:
+    IOT_DPS_CONNECTION_STRING: $(IOT_DPS_CONNECTION_STRING_LINUX_DF)
+    IOTHUB_EVENTHUB_CONNECTION_STRING: $(IOTHUB_EVENTHUB_CONNECTION_STRING_JAVA_LINUX_E2E_DF)
+    IOT_DPS_ID_SCOPE: $(IOT_DPS_ID_SCOPE_LINUX_DF)
+    IOTHUB_CONNECTION_STRING: $(IOTHUB_CONNECTION_STRING_JAVA_LINUX_E2E_DF)
+    IOT_DPS_TPM_SIMULATOR_IP_ADDRESS: $(IOT_DPS_TPM_SIMULATOR_IP_ADDRESS)
+    IOT_DPS_GLOBAL_ENDPOINT: $(IOT_DPS_GLOBAL_ENDPOINT)
+    STORAGE_ACCOUNT_CONNECTION_STRING: $(STORAGE_ACCOUNT_CONNECTION_STRING_JAVA_LINUX_E2E_DF)
