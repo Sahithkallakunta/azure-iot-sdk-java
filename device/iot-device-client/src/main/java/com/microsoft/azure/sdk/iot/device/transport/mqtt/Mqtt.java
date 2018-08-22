@@ -3,6 +3,7 @@
 
 package com.microsoft.azure.sdk.iot.device.transport.mqtt;
 
+import com.microsoft.azure.sdk.iot.device.DeviceTwin.DeviceOperations;
 import com.microsoft.azure.sdk.iot.device.Message;
 import com.microsoft.azure.sdk.iot.device.MessageType;
 import com.microsoft.azure.sdk.iot.device.exceptions.TransportException;
@@ -15,6 +16,7 @@ import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,6 +31,7 @@ abstract public class Mqtt implements MqttCallback
     private MqttMessageListener messageListener;
     ConcurrentLinkedQueue<Pair<String, byte[]>> allReceivedMessages;
     Object mqttLock;
+    Object publishLock;
 
     private static Map<Integer, Message> unacknowledgedSentMessages = new ConcurrentHashMap<>();
 
@@ -53,6 +56,8 @@ abstract public class Mqtt implements MqttCallback
     final static String OUTPUT_NAME = MESSAGE_SYSTEM_PROPERTY_IDENTIFIER_DECODED + ".on";
     final static String CONNECTION_DEVICE_ID = MESSAGE_SYSTEM_PROPERTY_IDENTIFIER_DECODED + ".cdid";
     final static String CONNECTION_MODULE_ID = MESSAGE_SYSTEM_PROPERTY_IDENTIFIER_DECODED + ".cmid";
+    final static String CONTENT_TYPE = MESSAGE_SYSTEM_PROPERTY_IDENTIFIER_DECODED + ".ct";
+    final static String CONTENT_ENCODING = MESSAGE_SYSTEM_PROPERTY_IDENTIFIER_DECODED + ".ce";
 
     private final static String IOTHUB_ACK = "iothub-ack";
 
@@ -82,6 +87,7 @@ abstract public class Mqtt implements MqttCallback
         this.mqttConnection = mqttConnection;
         this.allReceivedMessages = mqttConnection.getAllReceivedMessages();
         this.mqttLock = mqttConnection.getMqttLock();
+        this.publishLock = new Object();
         this.userSpecifiedSASTokenExpiredOnRetry = false;
         this.listener = listener;
         this.messageListener = messageListener;
@@ -214,9 +220,12 @@ abstract public class Mqtt implements MqttCallback
 
                 mqttMessage.setQos(MqttConnection.QOS);
 
-                //Codes_SRS_Mqtt_25_014: [The function shall publish message payload on the publishTopic specified to the IoT Hub given in the configuration.]
-                IMqttDeliveryToken publishToken = this.mqttConnection.getMqttAsyncClient().publish(publishTopic, mqttMessage);
-                this.unacknowledgedSentMessages.put(publishToken.getMessageId(), message);
+                synchronized (this.publishLock)
+                {
+                    //Codes_SRS_Mqtt_25_014: [The function shall publish message payload on the publishTopic specified to the IoT Hub given in the configuration.]
+                    IMqttDeliveryToken publishToken = this.mqttConnection.getMqttAsyncClient().publish(publishTopic, mqttMessage);
+                    this.unacknowledgedSentMessages.put(publishToken.getMessageId(), message);
+                }
             }
             catch (MqttException e)
             {
@@ -374,12 +383,33 @@ abstract public class Mqtt implements MqttCallback
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken)
     {
-        if (this.listener != null)
+        synchronized (this.publishLock)
         {
-            if (this.unacknowledgedSentMessages.containsKey(iMqttDeliveryToken.getMessageId()))
+            if (this.listener != null)
             {
-                //Codes_SRS_Mqtt_34_042: [If this object has a saved listener, that listener shall be notified of the successfully delivered message.]
-                this.listener.onMessageSent(this.unacknowledgedSentMessages.get(iMqttDeliveryToken.getMessageId()), null);
+                if (this.unacknowledgedSentMessages.containsKey(iMqttDeliveryToken.getMessageId()))
+                {
+                    Message deliveredMessage = this.unacknowledgedSentMessages.get(iMqttDeliveryToken.getMessageId());
+
+                    if (deliveredMessage instanceof IotHubTransportMessage)
+                    {
+                        DeviceOperations deviceOperation = ((IotHubTransportMessage) deliveredMessage).getDeviceOperationType();
+                        if (deviceOperation == DeviceOperations.DEVICE_OPERATION_TWIN_SUBSCRIBE_DESIRED_PROPERTIES_REQUEST
+                                || deviceOperation == DeviceOperations.DEVICE_OPERATION_METHOD_SUBSCRIBE_REQUEST
+                                || deviceOperation == DeviceOperations.DEVICE_OPERATION_TWIN_UNSUBSCRIBE_DESIRED_PROPERTIES_REQUEST)
+                        {
+                            //Codes_SRS_Mqtt_34_056: [If the acknowledged message is of type
+                            // DEVICE_OPERATION_TWIN_SUBSCRIBE_DESIRED_PROPERTIES_REQUEST, DEVICE_OPERATION_METHOD_SUBSCRIBE_REQUEST,
+                            // or DEVICE_OPERATION_TWIN_UNSUBSCRIBE_DESIRED_PROPERTIES_REQUEST, this function shall not notify the saved
+                            // listener that the message was sent.]
+                            //no need to alert the IotHubTransport layer about these messages as they are not tracked in the inProgressQueue
+                            return;
+                        }
+                    }
+
+                    //Codes_SRS_Mqtt_34_042: [If this object has a saved listener, that listener shall be notified of the successfully delivered message.]
+                    this.listener.onMessageSent(this.unacknowledgedSentMessages.get(iMqttDeliveryToken.getMessageId()), null);
+                }
             }
         }
     }
@@ -471,6 +501,7 @@ abstract public class Mqtt implements MqttCallback
                 }
 
                 //Some properties are reserved system properties and must be saved in the message differently
+                //Codes_SRS_Mqtt_34_057: [This function shall parse the messageId, correlationId, outputname, content encoding and content type from the provided property string]
                 switch (key)
                 {
                     case TO:
@@ -490,6 +521,12 @@ abstract public class Mqtt implements MqttCallback
                         break;
                     case OUTPUT_NAME:
                         message.setOutputName(value);
+                        break;
+                    case CONTENT_ENCODING:
+                        message.setContentEncoding(value);
+                        break;
+                    case CONTENT_TYPE:
+                        message.setContentType(value);
                         break;
                     case ABSOLUTE_EXPIRY_TIME:
                         //do nothing

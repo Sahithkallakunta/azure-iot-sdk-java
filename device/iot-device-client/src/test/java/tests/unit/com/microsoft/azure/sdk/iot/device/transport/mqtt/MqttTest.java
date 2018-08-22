@@ -8,6 +8,7 @@ import com.microsoft.azure.sdk.iot.device.auth.IotHubSasToken;
 import com.microsoft.azure.sdk.iot.device.exceptions.ProtocolException;
 import com.microsoft.azure.sdk.iot.device.exceptions.TransportException;
 import com.microsoft.azure.sdk.iot.device.transport.IotHubListener;
+import com.microsoft.azure.sdk.iot.device.transport.IotHubTransportMessage;
 import com.microsoft.azure.sdk.iot.device.transport.mqtt.*;
 import mockit.*;
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -17,11 +18,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static com.microsoft.azure.sdk.iot.device.DeviceTwin.DeviceOperations.DEVICE_OPERATION_METHOD_SUBSCRIBE_REQUEST;
+import static com.microsoft.azure.sdk.iot.device.DeviceTwin.DeviceOperations.DEVICE_OPERATION_TWIN_SUBSCRIBE_DESIRED_PROPERTIES_REQUEST;
+import static com.microsoft.azure.sdk.iot.device.DeviceTwin.DeviceOperations.DEVICE_OPERATION_TWIN_UNSUBSCRIBE_DESIRED_PROPERTIES_REQUEST;
 import static org.junit.Assert.*;
 
 /**
@@ -107,7 +114,7 @@ public class MqttTest
                     return new MutablePair<>(MOCK_PARSE_TOPIC, new byte[0]);
                 }
             };
-            return new MqttMessaging(mockedMqttConnection, CLIENT_ID, listener, mockedMessageListener, "", "");
+            return new MqttMessaging(mockedMqttConnection, CLIENT_ID, listener, mockedMessageListener, "", "", false);
         }
         else
         {
@@ -301,7 +308,7 @@ public class MqttTest
     {
         Mqtt mockMqtt = null;
         //act
-        mockMqtt = new MqttMessaging(null, CLIENT_ID, mockedIotHubListener, null, "", "");
+        mockMqtt = new MqttMessaging(null, CLIENT_ID, mockedIotHubListener, null, "", "", false);
     }
 
     /*
@@ -881,7 +888,7 @@ public class MqttTest
             }
         };
 
-        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "");
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
         new NonStrictExpectations()
         {
             {
@@ -928,7 +935,7 @@ public class MqttTest
             }
         };
 
-        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "");
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
         new NonStrictExpectations()
         {
             {
@@ -963,7 +970,7 @@ public class MqttTest
                 return new MutablePair<>(null, payload);
             }
         };
-        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "");
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
 
         new NonStrictExpectations()
         {
@@ -998,7 +1005,7 @@ public class MqttTest
             }
         };
 
-        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "");
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
         //act
         Message receivedMessage = mockMqtt.receive();
     }
@@ -1019,7 +1026,7 @@ public class MqttTest
             }
         };
 
-        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "");
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
         Deencapsulation.setField(mockMqtt, "mqttConnection", null);
 
         //act
@@ -1111,7 +1118,7 @@ public class MqttTest
         try
         {
             //arrange
-            MqttMessaging testMqttClient = new MqttMessaging(mockedMqttConnection,"deviceId", mockedIotHubListener, null, "", "");
+            MqttMessaging testMqttClient = new MqttMessaging(mockedMqttConnection,"deviceId", mockedIotHubListener, null, "", "", false);
             Queue<Pair<String, byte[]>> testAllReceivedMessages = new ConcurrentLinkedQueue<>();
             Deencapsulation.setField(testMqttClient, "allReceivedMessages", testAllReceivedMessages);
 
@@ -1145,7 +1152,7 @@ public class MqttTest
             }
         };
 
-        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "");
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
         new NonStrictExpectations()
         {
             {
@@ -1180,7 +1187,7 @@ public class MqttTest
             }
         };
 
-        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "");
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
 
         new NonStrictExpectations()
         {
@@ -1219,7 +1226,7 @@ public class MqttTest
             }
         };
 
-        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "");
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
         new NonStrictExpectations()
         {
             {
@@ -1247,6 +1254,60 @@ public class MqttTest
         assertEquals("%", receivedMessage.getProperties()[2].getName());
         assertEquals("\"", receivedMessage.getProperties()[2].getValue());
         assertEquals("=", receivedMessage.getProperties()[3].getValue());
+    }
+
+    //Tests_SRS_Mqtt_34_057: [This function shall parse the messageId, correlationId, outputname, content encoding and content type from the provided property string]
+    @Test
+    public void receiveSuccessWithSystemProperties() throws TransportException, MqttException, UnsupportedEncodingException
+    {
+        //arrange
+        final byte[] payload = {0x61, 0x62, 0x63};
+        final String msgId = "69ea4caf-d83e-454b-81f2-caafda4c81c8";
+        final String corId = "169c34b3-99b0-49f9-b0f6-8fa9d2c99345";
+        final String expTime = "1234";
+        final String contentEncoding = "utf-8";
+        final String contentType = "application/json";
+        final String outputName = "outputChannel1";
+        final String to = "/devices/deviceID/messages/deviceBound";
+        final String mockParseTopicWithUnusualCharacters = "devices/deviceID/messages/devicebound/%24.mid=" + msgId + "&%24.exp=" + expTime + "&%24.to=" + URLEncoder.encode(to, StandardCharsets.UTF_8.name()) + "&%24.cid=" + corId + "&iothub-ack=full&%24.ce=" + contentEncoding + "&%24.ct=" + URLEncoder.encode(contentType, StandardCharsets.UTF_8.name()) + "&%24.on=" + outputName + "&property1=%24&property2=%26&%25=%22&finalProperty=%3d";
+        baseConstructorExpectations();
+        baseConnectExpectation();
+        new MockUp<MqttMessaging>()
+        {
+            @Mock
+            Pair<String, byte[]> peekMessage()
+            {
+                return new MutablePair<>(mockParseTopicWithUnusualCharacters, payload);
+            }
+        };
+
+        final Mqtt mockMqtt = new MqttMessaging(mockedMqttConnection, CLIENT_ID, mockedIotHubListener, null, "", "", false);
+        new NonStrictExpectations()
+        {
+            {
+                mockMqttAsyncClient.isConnected();
+                result = true;
+            }
+        };
+
+        Deencapsulation.invoke(mockMqtt, "connect");
+
+        //act
+        Message receivedMessage = mockMqtt.receive();
+
+        //assert
+        byte[] actualPayload = receivedMessage.getBytes();
+        assertTrue(actualPayload.length == payload.length);
+        for (int i = 0; i < payload.length; i++)
+        {
+            assertEquals(actualPayload[i], payload[i]);
+        }
+
+        assertEquals(msgId, receivedMessage.getMessageId());
+        assertEquals(corId, receivedMessage.getCorrelationId());
+        assertEquals(contentEncoding, receivedMessage.getContentEncoding());
+        assertEquals(contentType, receivedMessage.getContentType());
+        assertEquals(outputName, receivedMessage.getOutputName());
     }
 
     //Tests_SRS_Mqtt_34_037: [If the provided throwable is an instance of MqttException, this function shall derive the associated TransportException and notify the listeners of that derived exception.]
@@ -1303,6 +1364,123 @@ public class MqttTest
                 mockedIotHubListener.onMessageSent(expectedMessage, null);
                 times = 1;
                 mockedIotHubListener.onMessageSent(otherMessage, null);
+                times = 0;
+            }
+        };
+    }
+
+    //Tests_SRS_Mqtt_34_056: [If the acknowledged message is of type
+    // DEVICE_OPERATION_TWIN_SUBSCRIBE_DESIRED_PROPERTIES_REQUEST, DEVICE_OPERATION_METHOD_SUBSCRIBE_REQUEST,
+    // or DEVICE_OPERATION_TWIN_UNSUBSCRIBE_DESIRED_PROPERTIES_REQUEST, this function shall not notify the saved
+    // listener that the message was sent.]
+    @Test
+    public void deliveryCompleteDoesNotNotifyListenerIfSubscribeToDesiredProperties() throws TransportException
+    {
+        //arrange
+        final int expectedMessageId = 13;
+        baseConstructorExpectations();
+        final Message otherMessage = new Message();
+        final IotHubTransportMessage expectedMessage = new IotHubTransportMessage("some body");
+        expectedMessage.setDeviceOperationType(DEVICE_OPERATION_TWIN_SUBSCRIBE_DESIRED_PROPERTIES_REQUEST);
+        Mqtt mockMqtt = instantiateMqtt(true, mockedIotHubListener);
+        Map<Integer, Message> unacknowledgedMessages = new HashMap<>();
+        unacknowledgedMessages.put(12, otherMessage);
+        unacknowledgedMessages.put(expectedMessageId, expectedMessage);
+        Deencapsulation.setField(mockMqtt, "unacknowledgedSentMessages", unacknowledgedMessages);
+        new NonStrictExpectations()
+        {
+            {
+                mockMqttDeliveryToken.getMessageId();
+                result = expectedMessageId;
+            }
+        };
+
+        //act
+        mockMqtt.deliveryComplete(mockMqttDeliveryToken);
+
+        //assert
+        new Verifications()
+        {
+            {
+                mockedIotHubListener.onMessageSent(expectedMessage, null);
+                times = 0;
+            }
+        };
+    }
+
+    //Tests_SRS_Mqtt_34_056: [If the acknowledged message is of type
+    // DEVICE_OPERATION_TWIN_SUBSCRIBE_DESIRED_PROPERTIES_REQUEST, DEVICE_OPERATION_METHOD_SUBSCRIBE_REQUEST,
+    // or DEVICE_OPERATION_TWIN_UNSUBSCRIBE_DESIRED_PROPERTIES_REQUEST, this function shall not notify the saved
+    // listener that the message was sent.]
+    @Test
+    public void deliveryCompleteDoesNotNotifyListenerIfSubscribeToMethods() throws TransportException
+    {
+        //arrange
+        final int expectedMessageId = 13;
+        baseConstructorExpectations();
+        final Message otherMessage = new Message();
+        final IotHubTransportMessage expectedMessage = new IotHubTransportMessage("some body");
+        expectedMessage.setDeviceOperationType(DEVICE_OPERATION_METHOD_SUBSCRIBE_REQUEST);
+        Mqtt mockMqtt = instantiateMqtt(true, mockedIotHubListener);
+        Map<Integer, Message> unacknowledgedMessages = new HashMap<>();
+        unacknowledgedMessages.put(12, otherMessage);
+        unacknowledgedMessages.put(expectedMessageId, expectedMessage);
+        Deencapsulation.setField(mockMqtt, "unacknowledgedSentMessages", unacknowledgedMessages);
+        new NonStrictExpectations()
+        {
+            {
+                mockMqttDeliveryToken.getMessageId();
+                result = expectedMessageId;
+            }
+        };
+
+        //act
+        mockMqtt.deliveryComplete(mockMqttDeliveryToken);
+
+        //assert
+        new Verifications()
+        {
+            {
+                mockedIotHubListener.onMessageSent(expectedMessage, null);
+                times = 0;
+            }
+        };
+    }
+
+    //Tests_SRS_Mqtt_34_056: [If the acknowledged message is of type
+    // DEVICE_OPERATION_TWIN_SUBSCRIBE_DESIRED_PROPERTIES_REQUEST, DEVICE_OPERATION_METHOD_SUBSCRIBE_REQUEST,
+    // or DEVICE_OPERATION_TWIN_UNSUBSCRIBE_DESIRED_PROPERTIES_REQUEST, this function shall not notify the saved
+    // listener that the message was sent.]
+    @Test
+    public void deliveryCompleteDoesNotNotifyListenerIfUnsubscribeToDesiredProperties() throws TransportException
+    {
+        //arrange
+        final int expectedMessageId = 13;
+        baseConstructorExpectations();
+        final Message otherMessage = new Message();
+        final IotHubTransportMessage expectedMessage = new IotHubTransportMessage("some body");
+        expectedMessage.setDeviceOperationType(DEVICE_OPERATION_TWIN_UNSUBSCRIBE_DESIRED_PROPERTIES_REQUEST);
+        Mqtt mockMqtt = instantiateMqtt(true, mockedIotHubListener);
+        Map<Integer, Message> unacknowledgedMessages = new HashMap<>();
+        unacknowledgedMessages.put(12, otherMessage);
+        unacknowledgedMessages.put(expectedMessageId, expectedMessage);
+        Deencapsulation.setField(mockMqtt, "unacknowledgedSentMessages", unacknowledgedMessages);
+        new NonStrictExpectations()
+        {
+            {
+                mockMqttDeliveryToken.getMessageId();
+                result = expectedMessageId;
+            }
+        };
+
+        //act
+        mockMqtt.deliveryComplete(mockMqttDeliveryToken);
+
+        //assert
+        new Verifications()
+        {
+            {
+                mockedIotHubListener.onMessageSent(expectedMessage, null);
                 times = 0;
             }
         };

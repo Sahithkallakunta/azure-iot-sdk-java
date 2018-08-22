@@ -3,7 +3,7 @@
     <groupId>com.microsoft.azure.sdk.iot</groupId>
     <artifactId>iot-service-client</artifactId>
     <name>Iot Hub Java Service SDK</name>
-    <version>1.14.0</version>
+    <version>1.14.1</version>
     <description>The Microsoft Azure IoT Service SDK for Java</description>
     <url>http://azure.github.io/azure-iot-sdk-java/</url>
     <developers>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.microsoft.azure.sdk.iot</groupId>
             <artifactId>iot-deps</artifactId>
-            <version>0.6.1</version>
+            <version>0.6.2</version>
         </dependency>
         <dependency>
             <groupId>org.jmockit</groupId>
@@ -114,7 +114,7 @@
 			<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
+                <version>2.22.0</version>
                 <configuration>
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
@@ -126,7 +126,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
+                <version>2.22.0</version>
                 <executions>
                     <execution>
                         <goals>

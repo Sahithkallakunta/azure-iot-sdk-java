@@ -217,15 +217,12 @@ public final class DeviceIO
      */
     public void close() throws IOException
     {
-        /* Codes_SRS_DEVICE_IO_21_020: [If the client is already closed, the close shall do nothing.] */
-        if (this.state == IotHubClientState.CLOSED)
-        {
-            return;
-        }
-
         /* Codes_SRS_DEVICE_IO_21_017: [The close shall finish all ongoing tasks.] */
         /* Codes_SRS_DEVICE_IO_21_018: [The close shall cancel all recurring tasks.] */
-        this.taskScheduler.shutdown();
+        if (taskScheduler != null)
+        {
+            this.taskScheduler.shutdown();
+        }
 
         /* Codes_SRS_DEVICE_IO_21_019: [The close shall close the transport.] */
         try
@@ -291,7 +288,8 @@ public final class DeviceIO
         // Codes_SRS_DEVICE_IO_12_001: [The function shall set the deviceId on the message if the deviceId parameter is not null.]
         if (deviceId != null)
         {
-            message.setConnectionDeviceId(deviceId);
+            //TODO re-enable later, including unit test. Disabled due to edgehub bug
+            //message.setConnectionDeviceId(deviceId);
         }
 
         logger.LogInfo("Message with messageid %s along with callback and callbackcontext is added to the queue, method name is %s ", message.getMessageId(), logger.getMethodName());

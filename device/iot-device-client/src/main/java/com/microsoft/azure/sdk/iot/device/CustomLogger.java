@@ -3,8 +3,8 @@
 
 package com.microsoft.azure.sdk.iot.device;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CustomLogger {
 
@@ -13,12 +13,12 @@ public class CustomLogger {
 
     public CustomLogger(Class<?> clazz)
     {
-        logger = Logger.getLogger(clazz);
+        logger = LoggerFactory.getLogger(clazz);
     }
 
     public void LogInfo(String message, Object...params)
     {
-        if(logger.isEnabledFor(Level.INFO))
+        if(logger.isInfoEnabled())
         {
             logger.info(String.format(message, params));
         }
@@ -26,7 +26,7 @@ public class CustomLogger {
 
     public void LogDebug(String message, Object...params)
     {
-        if(logger.isEnabledFor(Level.DEBUG))
+        if(logger.isDebugEnabled())
         {
             logger.debug(String.format(message, params));
         }
@@ -34,7 +34,7 @@ public class CustomLogger {
 
     public void LogDebug(String message, Throwable t, Object...params)
     {
-        if(logger.isEnabledFor(Level.DEBUG))
+        if(logger.isDebugEnabled())
         {
             logger.debug(String.format(message, params), t);
         }
@@ -42,7 +42,7 @@ public class CustomLogger {
 
     public void LogTrace(String message, Object...params)
     {
-        if(logger.isEnabledFor(Level.TRACE))
+        if(logger.isTraceEnabled())
         {
             logger.trace(String.format(message, params));
         }
@@ -50,23 +50,28 @@ public class CustomLogger {
 
     public void LogWarn(String message, Object...params)
     {
-        if(logger.isEnabledFor(Level.WARN))
+        if(logger.isWarnEnabled())
         {
             logger.warn(String.format(message, params));
         }
     }
 
+    /**
+     * @param message
+     * @param params
+     * @deprecated Since the switch from Log4j to slf4j there is no fatal log level anymore. Mapped to error level
+     */
     public void LogFatal(String message, Object...params)
     {
-        if(logger.isEnabledFor(Level.FATAL))
+        if(logger.isErrorEnabled())
         {
-            logger.fatal(String.format(message, params));
+            logger.error(String.format(message, params));
         }
     }
 
     public void LogError(String message, Object...params)
     {
-        if(logger.isEnabledFor(Level.ERROR))
+        if(logger.isErrorEnabled())
         {
             logger.error(String.format(message, params));
         }
@@ -74,9 +79,9 @@ public class CustomLogger {
 
     public void LogError(Throwable exception)
     {
-        if(logger.isEnabledFor(Level.ERROR))
+        if(logger.isErrorEnabled())
         {
-            logger.error(exception);
+            logger.error(exception.toString());
         }
     }
 
