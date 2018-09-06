@@ -17,4 +17,11 @@ public class depsTests
         System.out.println("I'm a test!");
         assertTrue(true);
     }
+
+    @Test
+    public void evenMoreTests()
+    {
+        System.out.println("The merge over PR worked!");
+        assertTrue(true);
+    }
 }
