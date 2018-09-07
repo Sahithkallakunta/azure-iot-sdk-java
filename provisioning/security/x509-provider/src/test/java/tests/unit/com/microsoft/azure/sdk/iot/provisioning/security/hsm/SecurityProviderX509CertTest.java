@@ -16,6 +16,7 @@ package tests.unit.com.microsoft.azure.sdk.iot.provisioning.security.hsm;
  import org.bouncycastle.openssl.PEMParser;
  import org.bouncycastle.util.io.pem.PemObject;
  import org.bouncycastle.util.io.pem.PemReader;
+ import org.junit.Ignore;
  import org.junit.Test;
 
  import java.io.ByteArrayInputStream;
@@ -48,6 +49,7 @@ public class SecurityProviderX509CertTest
     }
 
     @Test
+    @Ignore
     public void supposedToFail()
     {
         fail("This test is supposed to fail");
@@ -56,8 +58,8 @@ public class SecurityProviderX509CertTest
     @Test
     public void flakeyTest()
     {
-        double a = Math.floor(Math.random()*2);
-        if (a >= 1)
+        double a = Math.floor(Math.random()*4);
+        if (a >= 3)
         {
             fail("Bad luck, fella");
         }

@@ -5,6 +5,7 @@
 
 package tests.unit.com.microsoft.azure.sdk.iot;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertTrue;
@@ -27,6 +28,7 @@ public class depsTests
     }
 
     @Test
+    @Ignore
     public void supposedToFail()
     {
         fail("This test is supposed to fail");
@@ -35,8 +37,8 @@ public class depsTests
     @Test
     public void flakeyTest()
     {
-        double a = Math.floor(Math.random()*2);
-        if (a >= 1)
+        double a = Math.floor(Math.random()*4);
+        if (a >= 3)
         {
             fail("Bad luck, fella");
         }
