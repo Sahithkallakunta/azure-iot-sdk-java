@@ -31,4 +31,14 @@ public class depsTests
     {
         fail("This test is supposed to fail");
     }
+
+    @Test
+    public void flakeyTest()
+    {
+        double a = Math.floor(Math.random()*2);
+        if (a >= 1)
+        {
+            fail("Bad luck, fella");
+        }
+    }
 }
