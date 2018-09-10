@@ -7,6 +7,8 @@ This repository contains the following:
 
 To find SDKs in other languages for Azure IoT, please refer to the [azure-iot-sdks][azure-iot-sdks] repository
 
+Here is a change!
+
 ## Developing applications for Azure IoT
 Visit [Azure IoT Dev Center](http://azure.com/iotdev) to learn more about developing applications for Azure IoT.
 
