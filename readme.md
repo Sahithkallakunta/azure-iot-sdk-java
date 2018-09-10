@@ -10,6 +10,8 @@ To find SDKs in other languages for Azure IoT, please refer to the [azure-iot-sd
 ## Developing applications for Azure IoT
 Visit [Azure IoT Dev Center](http://azure.com/iotdev) to learn more about developing applications for Azure IoT.
 
+And here is another!
+
 ## How to use the Azure IoT SDKs for Java
 
 Devices and data sources in an IoT solution can range from a simple network-connected sensor to a powerful, standalone computing device. Devices may have limited processing capability, memory, communication bandwidth, and communication protocol support. The IoT device SDKs enable you to implement client applications for a wide variety of devices.
